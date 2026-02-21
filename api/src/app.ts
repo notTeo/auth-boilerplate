@@ -4,6 +4,7 @@ import cors from 'cors'
 import { ErrorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import authRoutes from "./routes/auth.routes"
+import cookieParser from 'cookie-parser';
 
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(cors(
         credentials: true,
     }
 ))
+app.use(cookieParser());
 
 app.use("/auth", authRoutes)
 
