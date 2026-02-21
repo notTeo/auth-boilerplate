@@ -6,6 +6,7 @@ import { logger } from './utils/logger';
 import authRoutes from "./routes/auth.routes"
 import userRoutes from "./routes/user.routes"
 import cookieParser from 'cookie-parser';
+import passport from 'passport';
 
 
 const app = express();
@@ -19,6 +20,7 @@ app.use(cors(
     }
 ))
 app.use(cookieParser());
+app.use(passport.initialize());
 
 app.use("/auth", authRoutes)
 app.use('/user', userRoutes);

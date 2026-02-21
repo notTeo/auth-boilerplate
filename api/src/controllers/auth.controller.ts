@@ -3,6 +3,8 @@ import { LoginDto, RegisterDto } from '../types/auth.types';
 import { forgotPassword, loginUser, logoutUser, refreshAccessToken, registerUser, resetPassword, verifyEmail } from "../services/auth.service";
 import { successResponse } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
+import { env } from "../config/env"
+
 
 export const register = async (
   req: Request,
@@ -142,4 +144,33 @@ export const resetPasswordController = async (
   } catch (err) {
     next(err);
   }
+};
+
+export const googleCallback = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { accessToken, refreshToken } = req.user as any;
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to frontend with access token
+    res.redirect(`${env.clientUrl}/oauth/callback?accessToken=${accessToken}`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const googleFailure = (
+  req: Request,
+  res: Response,
+) => {
+  res.redirect(`${env.clientUrl}/login?error=oauth_failed`);
 };
