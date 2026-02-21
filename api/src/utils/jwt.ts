@@ -1,5 +1,6 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
+import crypto from 'crypto';
 
 export const signAccessToken = (userId: string): string => {
   const options: SignOptions = {
@@ -27,5 +28,15 @@ export const getRefreshTokenExpiry = (): Date => {
   const days = parseInt(env.jwt.refreshExpiresIn.replace('d', ''));
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + days);
+  return expiry;
+};
+
+export const generateRandomToken = (): string => {
+  return crypto.randomBytes(32).toString('hex');
+};
+
+export const getEmailTokenExpiry = (): Date => {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 24);
   return expiry;
 };

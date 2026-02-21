@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { LoginDto, RegisterDto } from '../types/auth.types';
-import { loginUser, logoutUser, refreshAccessToken, registerUser } from "../services/auth.service";
+import { loginUser, logoutUser, refreshAccessToken, registerUser, verifyEmail } from "../services/auth.service";
 import { successResponse } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
@@ -11,8 +11,12 @@ export const register = async (
 ) => {
   try {
     const dto: RegisterDto = req.body;
-    const user = await registerUser(dto);
-    successResponse(res, {user}, 201);
+    await registerUser(dto);
+    successResponse(
+      res,
+      { message: 'Verification email sent. Please check your inbox.' },
+      201,
+    );
   } catch (err) {
     next(err);
   }
@@ -86,6 +90,25 @@ export const logout = async (
     });
 
     successResponse(res, { message: 'Logged out successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyEmailController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { token } = req.query as { token: string };
+
+    if (!token) {
+      throw new AppError(400, 'Token is required');
+    }
+
+    const user = await verifyEmail(token);
+    successResponse(res, { user });
   } catch (err) {
     next(err);
   }
