@@ -19,3 +19,19 @@ export const loginValidation = [
     .notEmpty()
     .withMessage('Password is required'),
 ];
+
+export const forgotPasswordValidation = [
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+];
+
+export const resetPasswordValidation = [
+  body('token')
+    .notEmpty()
+    .withMessage('Token is required'),
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters'),
+];

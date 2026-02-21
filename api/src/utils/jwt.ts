@@ -40,3 +40,9 @@ export const getEmailTokenExpiry = (): Date => {
   expiry.setHours(expiry.getHours() + 24);
   return expiry;
 };
+
+export const getPasswordResetTokenExpiry = (): Date => {
+  const expiry = new Date();
+  expiry.setHours(expiry.getHours() + 1);
+  return expiry;
+};

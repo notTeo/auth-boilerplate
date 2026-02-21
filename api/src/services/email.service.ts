@@ -29,3 +29,30 @@ export const sendVerificationEmail = async (
 
   logger.info(`Verification email sent to ${email}`);
 };
+
+export const sendPasswordResetEmail = async (
+  email: string,
+  token: string,
+) => {
+  const resetUrl = `${env.clientUrl}/reset-password?token=${token}`;
+
+  const { error } = await resend.emails.send({
+    from: env.resend.emailFrom,
+    to: email,
+    subject: 'Reset your password',
+    html: `
+      <h2>Password Reset</h2>
+      <p>Click the link below to reset your password:</p>
+      <a href="${resetUrl}">Reset Password</a>
+      <p>This link expires in 1 hour.</p>
+      <p>If you didn't request this, ignore this email.</p>
+    `,
+  });
+
+  if (error) {
+    logger.error(error, `Failed to send reset email to ${email}`);
+    throw new Error('Failed to send password reset email');
+  }
+
+  logger.info(`Password reset email sent to ${email}`);
+};

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { LoginDto, RegisterDto } from '../types/auth.types';
-import { loginUser, logoutUser, refreshAccessToken, registerUser, verifyEmail } from "../services/auth.service";
+import { forgotPassword, loginUser, logoutUser, refreshAccessToken, registerUser, resetPassword, verifyEmail } from "../services/auth.service";
 import { successResponse } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 
@@ -109,6 +109,36 @@ export const verifyEmailController = async (
 
     const user = await verifyEmail(token);
     successResponse(res, { user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const forgotPasswordController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { email } = req.body;
+    await forgotPassword(email);
+    successResponse(res, {
+      message: 'If this email exists you will receive a reset link shortly.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPasswordController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { token, password } = req.body;
+    await resetPassword(token, password);
+    successResponse(res, { message: 'Password reset successfully' });
   } catch (err) {
     next(err);
   }
