@@ -1,6 +1,7 @@
 import express from 'express';
 import { env } from './config/env';
 import cors from 'cors'
+import helmet from 'helmet';
 import { ErrorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import authRoutes from "./routes/auth.routes"
@@ -12,6 +13,7 @@ import passport from 'passport';
 const app = express();
 
 //Middleware
+app.use(helmet());
 app.use(express.json())
 app.use(cors(
     {

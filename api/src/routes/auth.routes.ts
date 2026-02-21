@@ -3,6 +3,7 @@ import { login, register, refresh, logout, verifyEmailController, forgotPassword
 import { forgotPasswordValidation, loginValidation, registerValidation, resetPasswordValidation } from '../validators/authValidation';
 import { validate } from '../middleware/validate';
 import passport from '../config/passport';
+import { authLimiter, forgotPasswordLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -19,12 +20,12 @@ router.get(
 
 router.get('/google/failure', googleFailure);
 
-router.post('/register',registerValidation, validate, register);
-router.post('/login', loginValidation, validate, login);
-router.post('/refresh', refresh);
+router.post('/register', authLimiter, registerValidation, validate, register);
+router.post('/login', authLimiter, loginValidation, validate, login);
+router.post('/refresh', authLimiter, refresh);
 router.post('/logout', logout);
 router.get('/verify-email', verifyEmailController);
-router.post('/forgot-password', forgotPasswordValidation, validate, forgotPasswordController);
-router.post('/reset-password', resetPasswordValidation, validate, resetPasswordController);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidation, validate, forgotPasswordController);
+router.post('/reset-password', authLimiter, resetPasswordValidation, validate, resetPasswordController);
 
 export default router;
