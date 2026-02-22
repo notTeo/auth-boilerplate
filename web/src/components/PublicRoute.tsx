@@ -1,7 +1,11 @@
-import { Navigate } from 'react-router-dom';
-import { authStore } from '../store/authStore';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-export default function PublicRoute({ children }: { children: React.ReactNode }) {
-  if (authStore.getToken()) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
+export default function PublicRoute() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return null;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+
+  return <Outlet />;
 }

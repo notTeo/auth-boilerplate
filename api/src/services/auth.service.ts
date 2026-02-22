@@ -99,9 +99,13 @@ export const refreshAccessToken = async (token:string) => {
     throw new AppError(401, 'Refresh token expired or not found');
   }
 
-  await prisma.refreshToken.delete({
+  const deleted = await prisma.refreshToken.deleteMany({
     where: { token },
   });
+
+  if (deleted.count === 0) {
+    throw new AppError(401, 'Refresh token already used');
+  }
 
   const newRefreshToken = signRefreshToken(payload.userId);
 
@@ -113,7 +117,7 @@ export const refreshAccessToken = async (token:string) => {
     },
   });
 
-  const accessToken = (payload.userId);
+  const accessToken = signAccessToken(payload.userId);
 
   logger.info(`Access token refreshed for userId: ${payload.userId}`);
 

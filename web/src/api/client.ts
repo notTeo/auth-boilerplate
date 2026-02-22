@@ -7,6 +7,11 @@ const client = axios.create({
   withCredentials: true,
 });
 
+export const refreshClient = axios.create({
+  baseURL: env.apiUrl,
+  withCredentials: true,
+});
+
 client.interceptors.request.use((config) => {
   const token = authStore.getToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -20,7 +25,7 @@ client.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const { data } = await client.post('/auth/refresh');
+        const { data } = await refreshClient.post('/auth/refresh');
         authStore.setToken(data.data.accessToken);
         original.headers.Authorization = `Bearer ${data.data.accessToken}`;
         return client(original);
