@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { verifyEmail } from '../api/auth.api';
+import '../styles/pages/verify-email.css';
 
 export default function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -30,7 +31,7 @@ export default function VerifyEmailPage() {
     <div className="page">
       <div className="card">
         <h1>Email Verification</h1>
-        {status === 'loading' && <p style={{ color: 'var(--text-muted)' }}>Verifying...</p>}
+        {status === 'loading' && <p className="verify-email-status">Verifying...</p>}
         {status === 'success' && (
           <>
             <div className="alert alert-success">{message}</div>

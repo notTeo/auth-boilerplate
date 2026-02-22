@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { authStore } from '../store/authStore';
+import '../styles/pages/oauth-callback.css';
 import { getMe } from '../api/user.api';
 import { useAuth } from '../context/AuthContext';
 
@@ -32,7 +33,7 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="page">
-      <p style={{ color: 'var(--text-muted)' }}>Signing you in...</p>
+      <p className="oauth-status">Signing you in...</p>
     </div>
   );
 }

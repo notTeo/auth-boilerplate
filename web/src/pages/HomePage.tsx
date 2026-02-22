@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import '../styles/pages/home.css';
 
 export default function HomePage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div className="home-layout">
       <Navbar />
       <main className="hero">
         <h1>Welcome to the<br /><span>Auth Boilerplate</span></h1>

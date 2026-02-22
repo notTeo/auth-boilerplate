@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import '../styles/pages/navbar.css';
 
 export default function Navbar() {
   const { isAuthenticated, isLoading, logout } = useAuth();

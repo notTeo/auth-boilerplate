@@ -15,8 +15,8 @@ const baseTemplate = (title: string, content: string) => `
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #0f1117;
-      color: #e8eaf6;
+      background: #ffffff;
+      color: #1a1a2e;
       font-family: 'Poppins', sans-serif;
       padding: 2rem 1rem;
     }
@@ -31,8 +31,8 @@ const baseTemplate = (title: string, content: string) => `
       margin-bottom: 1.5rem;
     }
     .card {
-      background: #1a1d27;
-      border: 1px solid #2e3352;
+      background: #f4f5f9;
+      border: 1px solid #d8dae8;
       border-radius: 10px;
       padding: 2rem 1.5rem;
     }
@@ -40,9 +40,10 @@ const baseTemplate = (title: string, content: string) => `
       font-size: 1.5rem;
       font-weight: 800;
       margin-bottom: 0.75rem;
+      color: #1a1a2e;
     }
     p {
-      color: #7b82a8;
+      color: #5a6080;
       font-size: 0.95rem;
       line-height: 1.6;
       margin-bottom: 1.25rem;
@@ -58,10 +59,35 @@ const baseTemplate = (title: string, content: string) => `
       text-decoration: none;
     }
     .footer {
-      color: #7b82a8;
+      color: #5a6080;
       font-size: 0.8rem;
       margin-top: 1.25rem;
       text-align: center;
+    }
+    strong {
+      color: #1a1a2e;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0f1117;
+        color: #e8eaf6;
+      }
+      .card {
+        background: #1a1d27;
+        border-color: #2e3352;
+      }
+      h1 {
+        color: #e8eaf6;
+      }
+      p {
+        color: #7b82a8;
+      }
+      .footer {
+        color: #7b82a8;
+      }
+      strong {
+        color: #e8eaf6;
+      }
     }
   </style>
 </head>
@@ -89,7 +115,7 @@ export const sendVerificationEmail = async (
     subject: 'Verify your email',
     html: baseTemplate('Verify your email', `
       <h1>Verify your email</h1>
-      <p>Thanks for signing up! Click the button below to verify your email address. This link expires in <strong style="color:#e8eaf6">24 hours</strong>.</p>
+      <p>Thanks for signing up! Click the button below to verify your email address. This link expires in <strong>24 hours</strong>.</p>
       <a href="${verificationUrl}" class="btn">Verify Email</a>
     `),
   });
@@ -114,7 +140,7 @@ export const sendPasswordResetEmail = async (
     subject: 'Reset your password',
     html: baseTemplate('Reset your password', `
       <h1>Reset your password</h1>
-      <p>We received a request to reset your password. Click the button below to set a new one. This link expires in <strong style="color:#e8eaf6">1 hour</strong>.</p>
+      <p>We received a request to reset your password. Click the button below to set a new one. This link expires in <strong>1 hour</strong>.</p>
       <a href="${resetUrl}" class="btn">Reset Password</a>
     `),
   });

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { register } from '../api/auth.api';
 import { env } from '../config/env';
+import '../styles/pages/register.css';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');

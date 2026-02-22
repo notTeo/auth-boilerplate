@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { env } from '../config/env';
+import '../styles/pages/login.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
