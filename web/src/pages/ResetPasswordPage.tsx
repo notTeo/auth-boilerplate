@@ -52,6 +52,14 @@ export default function ResetPasswordPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            {password.length > 0 && (
+              <ul className="password-requirements">
+                <li className={password.length >= 8 ? 'req-met' : 'req-unmet'}>At least 8 characters</li>
+                <li className={/[A-Z]/.test(password) ? 'req-met' : 'req-unmet'}>One uppercase letter</li>
+                <li className={/[0-9]/.test(password) ? 'req-met' : 'req-unmet'}>One number</li>
+                <li className={/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password) ? 'req-met' : 'req-unmet'}>One special character (!@#$%...)</li>
+              </ul>
+            )}
           </div>
           <div className="form-group">
             <label htmlFor="confirm">Confirm Password</label>

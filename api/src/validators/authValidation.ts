@@ -7,7 +7,13 @@ export const registerValidation = [
     .normalizeEmail(),
   body('password')
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters'),
+    .withMessage('Password must be at least 8 characters')
+    .matches(/[A-Z]/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/[0-9]/)
+    .withMessage('Password must contain at least one number')
+    .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/)
+    .withMessage('Password must contain at least one special character'),
 ];
 
 export const loginValidation = [
@@ -40,5 +46,11 @@ export const resetPasswordValidation = [
     .withMessage('Token is required'),
   body('password')
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters'),
+    .withMessage('Password must be at least 8 characters')
+    .matches(/[A-Z]/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/[0-9]/)
+    .withMessage('Password must contain at least one number')
+    .matches(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/)
+    .withMessage('Password must contain at least one special character'),
 ];
