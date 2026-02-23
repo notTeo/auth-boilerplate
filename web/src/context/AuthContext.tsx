@@ -8,6 +8,13 @@ interface User {
   email: string;
   isVerified: boolean;
   createdAt: string;
+  plan: 'free' | 'pro';
+  subscription?: {
+    status: string;
+    stripePriceId: string;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
+  } | null;
 }
 
 interface AuthContextType {

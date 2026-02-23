@@ -17,6 +17,14 @@ export const getMe = async (
         email: true,
         isVerified: true,
         createdAt: true,
+        subscription: {
+          select: {
+            status: true,
+            stripePriceId: true,
+            currentPeriodEnd: true,
+            cancelAtPeriodEnd: true,
+          },
+        },
       },
     });
 
@@ -24,7 +32,13 @@ export const getMe = async (
       throw new AppError(404, 'User not found');
     }
 
-    successResponse(res, { user });
+    const plan =
+      user.subscription?.status === 'active' ||
+      user.subscription?.status === 'trialing'
+        ? 'pro'
+        : 'free';
+
+    successResponse(res, { user: { ...user, plan } });
   } catch (err) {
     next(err);
   }

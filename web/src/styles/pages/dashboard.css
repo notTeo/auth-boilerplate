@@ -1,15 +1,7 @@
-.dashboard-layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
 .dashboard-content {
-  flex: 1;
   display: flex;
+  justify-content: flex-start;
   align-items: flex-start;
-  justify-content: center;
-  padding: 3rem 1.5rem 1.5rem;
 }
 
 .dashboard-field {
@@ -39,9 +31,24 @@
   color: var(--text-muted);
 }
 
-/* ============ Mobile ============ */
-@media (max-width: 640px) {
-  .dashboard-content {
-    padding: 1.5rem 1rem;
-  }
+/* ─── Subscription cancellation notice ─── */
+.dashboard-sub-notice {
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: var(--radius);
+  color: #ffb347;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.65rem 1rem;
+  line-height: 1.5;
+}
+
+.dashboard-sub-notice a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.dashboard-sub-notice a:hover {
+  opacity: 0.8;
+  text-decoration: none;
 }

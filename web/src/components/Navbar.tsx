@@ -22,7 +22,7 @@ export default function Navbar() {
 
       {/* Desktop nav links */}
       <div className="navbar-links">
-        <Link to="/plans" className="navbar-link">Plans</Link>
+        <Link to="/pricing" className="navbar-link">Pricing</Link>
         <Link to="/about" className="navbar-link">About</Link>
       </div>
 
@@ -30,12 +30,7 @@ export default function Navbar() {
       <div className="navbar-actions">
         {!isLoading && (
           isAuthenticated ? (
-            <>
-              <Link to="/dashboard">
-                <button className="btn btn-ghost">Dashboard</button>
-              </Link>
-              <button className="btn btn-danger" onClick={handleLogout}>Logout</button>
-            </>
+            <button className="btn btn-ghost" onClick={handleLogout}>Logout</button>
           ) : (
             <>
               <Link to="/login">
@@ -63,17 +58,12 @@ export default function Navbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="navbar-mobile-menu">
-          <Link to="/plans" className="navbar-link" onClick={closeMenu}>Plans</Link>
+          <Link to="/pricing" className="navbar-link" onClick={closeMenu}>Pricing</Link>
           <Link to="/about" className="navbar-link" onClick={closeMenu}>About</Link>
           <div className="navbar-mobile-divider" />
           {!isLoading && (
             isAuthenticated ? (
-              <>
-                <Link to="/dashboard" onClick={closeMenu}>
-                  <button className="btn btn-ghost">Dashboard</button>
-                </Link>
-                <button className="btn btn-danger" onClick={handleLogout}>Logout</button>
-              </>
+              <button className="btn btn-ghost" onClick={handleLogout}>Logout</button>
             ) : (
               <>
                 <Link to="/login" onClick={closeMenu}>

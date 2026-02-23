@@ -3,6 +3,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import AppLayout from './components/AppLayout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
@@ -11,8 +12,10 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import HomePage from './pages/HomePage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
-import PlansPage from './pages/PlansPage'
+import PricingPage from './pages/PricingPage'
 import AboutPage from './pages/AboutPage'
+import BillingPage from './pages/BillingPage';
+import SettingsPage from './pages/SettingsPage';
 
 
 export default function App() {
@@ -21,7 +24,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/about" element={<AboutPage />} />
 
           <Route element={<PublicRoute />}>
@@ -35,7 +38,11 @@ export default function App() {
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/billing" element={<BillingPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

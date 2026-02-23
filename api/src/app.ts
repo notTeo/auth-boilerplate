@@ -13,6 +13,7 @@ import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parse } from 'yaml';
+import billingRoutes from './routes/billing.routes';
 
 const app = express();
 
@@ -33,7 +34,7 @@ app.use(helmet({
   // XSS filter for older browsers
   xssFilter: true,
 }));
-app.use(express.json())
+
 app.use(cors(
     {
         origin: env.clientUrl,
@@ -42,6 +43,9 @@ app.use(cors(
 ))
 app.use(cookieParser());
 app.use(passport.initialize());
+
+app.use('/billing', billingRoutes);
+app.use(express.json())
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
