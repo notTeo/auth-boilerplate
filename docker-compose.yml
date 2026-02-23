@@ -33,6 +33,8 @@ services:
   web:
     build:
       context: ./web
+      args:
+        VITE_API_URL: http://localhost:5001
     container_name: auth_web
     restart: unless-stopped
     depends_on:

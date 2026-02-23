@@ -38,3 +38,10 @@
   word-break: break-all;
   color: var(--text-muted);
 }
+
+/* ============ Mobile ============ */
+@media (max-width: 640px) {
+  .dashboard-content {
+    padding: 1.5rem 1rem;
+  }
+}

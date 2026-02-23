@@ -41,6 +41,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="page">
       <div className="card">
+        <Link to="/" className="card-back">← AuthBoilerplate</Link>
         <h1>Reset Password</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">

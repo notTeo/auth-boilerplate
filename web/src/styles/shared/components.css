@@ -199,3 +199,20 @@ input:focus {
 .btn-google svg {
   flex-shrink: 0;
 }
+
+/* --- Card back link --- */
+.card-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  transition: color 0.2s;
+}
+
+.card-back:hover {
+  color: var(--text);
+  text-decoration: none;
+}
