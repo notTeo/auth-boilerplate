@@ -50,7 +50,11 @@ export default function BillingPage() {
         {user?.plan === 'pro' && user.subscription && (
           <div className="billing-field">
             <span className="billing-label">
-              {user.subscription.cancelAtPeriodEnd ? 'Cancels on' : 'Renews on'}
+              {user.subscription.status === 'canceled'
+              ? 'Access until'
+              : user.subscription.cancelAtPeriodEnd
+                ? 'Cancels on'
+                : 'Renews on'}
             </span>
             <span>{new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}</span>
           </div>

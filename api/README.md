@@ -1,6 +1,6 @@
 # API — Auth Boilerplate
 
-Express + TypeScript backend. Handles all authentication logic, token management, email, and Google OAuth.
+Express + TypeScript backend. Handles authentication, token management, email, Google OAuth, user management, and Stripe billing.
 
 Local dev runs on: `http://localhost:3000`
 Docker runs on: `http://localhost:5001` (mapped from internal port 3000)
@@ -16,6 +16,7 @@ Docker runs on: `http://localhost:5001` (mapped from internal port 3000)
 | jsonwebtoken | Sign and verify JWTs |
 | bcrypt | Password hashing |
 | Resend | Transactional email |
+| Stripe | Billing, subscriptions, webhooks |
 | express-validator | Input validation |
 | express-rate-limit | Rate limiting |
 | helmet | Security headers |
@@ -26,15 +27,16 @@ Docker runs on: `http://localhost:5001` (mapped from internal port 3000)
 ```
 api/
 ├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
+│   ├── schema.prisma         ← User, Subscription models
+│   └── migrations/           ← committed SQL migration history
 ├── src/
 │   ├── config/
 │   │   ├── env.ts            ← validated env variables
 │   │   └── passport.ts       ← Google OAuth strategy setup
 │   ├── controllers/
 │   │   ├── auth.controller.ts
-│   │   └── user.controller.ts
+│   │   ├── user.controller.ts   ← getMe, updateMe, deleteMe
+│   │   └── billing.controller.ts ← checkout, portal, webhook
 │   ├── middleware/
 │   │   ├── authenticate.ts   ← JWT Bearer token guard
 │   │   ├── validate.ts       ← express-validator error handler
@@ -42,11 +44,13 @@ api/
 │   │   └── errorHandler.ts   ← global error handler
 │   ├── routes/
 │   │   ├── auth.routes.ts
-│   │   └── user.routes.ts
+│   │   ├── user.routes.ts
+│   │   └── billing.routes.ts
 │   ├── services/
-│   │   ├── auth.service.ts   ← register, login, refresh, logout, verify, reset
-│   │   ├── email.service.ts  ← Resend email templates
-│   │   └── oauth.service.ts  ← Google OAuth user creation/linking
+│   │   ├── auth.service.ts      ← register, login, refresh, logout, verify, reset, update, delete
+│   │   ├── email.service.ts     ← Resend email templates
+│   │   ├── oauth.service.ts     ← Google OAuth user creation/linking
+│   │   └── billing.service.ts   ← Stripe customer, checkout, portal, webhook handlers
 │   ├── utils/
 │   │   ├── jwt.ts            ← sign/verify helpers + token expiry
 │   │   ├── prisma.ts         ← Prisma client singleton
@@ -68,6 +72,7 @@ api/
 - PostgreSQL running locally or a remote connection string
 - [Resend](https://resend.com) account and API key
 - [Google Cloud](https://console.cloud.google.com) OAuth 2.0 credentials
+- [Stripe](https://stripe.com) account + [Stripe CLI](https://stripe.com/docs/stripe-cli) for webhooks
 
 ### Steps
 
@@ -78,6 +83,16 @@ npm install
 npx prisma migrate dev
 npm run dev
 ```
+
+### Stripe webhooks (local dev)
+
+In a separate terminal, forward Stripe events to your local server:
+
+```bash
+stripe listen --forward-to localhost:3000/billing/webhook
+```
+
+Copy the `whsec_...` secret printed by the CLI and set it as `STRIPE_WEBHOOK_SECRET` in `api/.env`. Restart the API after updating.
 
 ## Docker
 
@@ -116,12 +131,17 @@ EMAIL_FROM=noreply@yourdomain.com
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxx  # from: stripe listen --forward-to ...
+STRIPE_PRO_PRICE_ID=price_xxxxxxxxxxxx
 ```
 
 For **Docker**, fill in the root `.env`. Key differences:
 - `CLIENT_URL=http://localhost` (frontend on port 80)
 - `DATABASE_URL` uses `postgres` as the hostname (Docker service name)
 - `GOOGLE_CALLBACK_URL=http://localhost:5001/auth/google/callback`
+- Use a real Stripe webhook secret from the Stripe Dashboard (not the CLI one)
 
 > Never commit `.env`. It is already in `.gitignore`.
 
@@ -131,7 +151,7 @@ For **Docker**, fill in the root `.env`. Key differences:
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/health` | Returns `{ status: "ok", timestamp }` — useful for uptime checks |
+| GET | `/health` | Returns `{ status: "ok", timestamp }` |
 | GET | `/docs` | Swagger UI — **local dev only**, disabled in production |
 
 ### Auth — `/auth`
@@ -152,7 +172,25 @@ For **Docker**, fill in the root `.env`. Key differences:
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| GET | `/user/me` | Bearer token | Get current authenticated user |
+| GET | `/user/me` | ✅ | Get current authenticated user + subscription |
+| PATCH | `/user/me` | ✅ | Update email or password |
+| DELETE | `/user/me` | ✅ | Delete account (requires `password` in body) |
+
+### Billing — `/billing`
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/billing/create-checkout-session` | ✅ | Create Stripe Checkout session, returns `{ url }` |
+| POST | `/billing/create-portal-session` | ✅ | Create Stripe Billing Portal session, returns `{ url }` |
+| POST | `/billing/webhook` | ❌ (Stripe signature) | Receive and process Stripe webhook events |
+
+#### Webhook events handled
+
+| Event | Action |
+|---|---|
+| `checkout.session.completed` | Create/update subscription record in DB |
+| `customer.subscription.updated` | Sync status, `cancelAtPeriodEnd`, and period end |
+| `customer.subscription.deleted` | Mark subscription as `canceled` |
 
 ## Scripts
 

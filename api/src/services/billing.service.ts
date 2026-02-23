@@ -84,15 +84,20 @@ export const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Se
 };
 
 export const handleSubscriptionUpdated = async (subscription: Stripe.Subscription) => {
+  if (subscription.cancel_at) {
+    
+  }
+
   await prisma.subscription.update({
     where: { stripeSubscriptionId: subscription.id },
     data: {
       status: subscription.status,
       currentPeriodEnd: new Date(subscription.items.data[0].current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end || subscription.cancel_at !== null,
     },
   });
-
+  logger.warn(subscription.cancel_at_period_end)
+  logger.warn(subscription.status)
   logger.info(`Subscription updated: ${subscription.id}`);
 };
 
