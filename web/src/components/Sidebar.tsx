@@ -67,14 +67,18 @@ export default function Sidebar() {
 
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
-      <button
-        className="sidebar-toggle"
-        onClick={toggle}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
+      <div className='sidebar-header'>
+        <h4 className='sidebar-link-label'>Auth Boilerplate</h4>
+        <button
+          className="sidebar-toggle"
+          onClick={toggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
         {collapsed ? <IconChevronRight /> : <IconChevronLeft />}
       </button>
+      </div>
+      
 
       <span className="sidebar-section-label">App</span>
 
