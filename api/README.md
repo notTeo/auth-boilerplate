@@ -2,7 +2,8 @@
 
 Express + TypeScript backend. Handles all authentication logic, token management, email, and Google OAuth.
 
-Runs on: `http://localhost:3000`
+Local dev runs on: `http://localhost:3000`
+Docker runs on: `http://localhost:5001` (mapped from internal port 3000)
 
 ## Stack
 
@@ -59,7 +60,7 @@ api/
 └── package.json
 ```
 
-## Setup
+## Local Dev Setup
 
 ### Prerequisites
 
@@ -78,37 +79,60 @@ npx prisma migrate dev
 npm run dev
 ```
 
+## Docker
+
+In Docker, the API is built and run via the root `docker-compose.yml`. It reads env vars from the **root `.env`** — not from `api/.env`.
+
+`api/.env` is only used for local development.
+
+```bash
+# From the project root
+docker compose up --build
+```
+
+The API will be available at `http://localhost:5001`.
+
+Prisma migrations run automatically on container start (`prisma migrate deploy`).
+
 ## Environment Variables
 
+For **local dev**, copy and fill in `api/.env.example`:
+
 ```env
-# App
 PORT=3000
+NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 
-# Database
 DATABASE_URL=postgresql://user:password@localhost:5432/auth_boilerplate
 
-# JWT
-JWT_ACCESS_SECRET=your_access_secret_here
-JWT_REFRESH_SECRET=your_refresh_secret_here
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
 JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=30d
 
-# Resend
 RESEND_API_KEY=re_xxxxxxxxxxxx
 EMAIL_FROM=noreply@yourdomain.com
 
-# Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 ```
 
+For **Docker**, fill in the root `.env`. Key differences:
+- `CLIENT_URL=http://localhost` (frontend on port 80)
+- `DATABASE_URL` uses `postgres` as the hostname (Docker service name)
+- `GOOGLE_CALLBACK_URL=http://localhost:5001/auth/google/callback`
+
 > Never commit `.env`. It is already in `.gitignore`.
 
-For Google OAuth, add `http://localhost:3000/auth/google/callback` as an authorized redirect URI in your Google Cloud Console.
-
 ## Endpoints
+
+### System
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Returns `{ status: "ok", timestamp }` — useful for uptime checks |
+| GET | `/docs` | Swagger UI — **local dev only**, disabled in production |
 
 ### Auth — `/auth`
 

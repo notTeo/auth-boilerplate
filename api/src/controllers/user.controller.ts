@@ -37,7 +37,7 @@ export const updateMe = async (
 ) => {
   try {
     const { email, password } = req.body;
-    const user = await updateUser(req.user!.userId, { email, password });
+    const user = await updateUser(req.user!.userId!, { email, password });
     successResponse(res, { user });
   } catch (err) {
     next(err);
@@ -51,7 +51,7 @@ export const deleteMe = async (
 ) => {
   try {
     const { password } = req.body;
-    await deleteUser(req.user!.userId, password);
+    await deleteUser(req.user!.userId!, password);
 
     res.clearCookie('refreshToken', {
       httpOnly: true,

@@ -195,7 +195,7 @@ export const getSessionsController = async (
   next: NextFunction,
 ) => {
   try {
-    const sessions = await getSessions(req.user!.userId);
+    const sessions = await getSessions(req.user!.userId!);
     successResponse(res, { sessions });
   } catch (err) {
     next(err);
@@ -209,7 +209,7 @@ export const revokeAllSessionsController = async (
 ) => {
   try {
     const currentToken = req.cookies?.refreshToken;
-    await revokeAllSessions(req.user!.userId, currentToken);
+    await revokeAllSessions(req.user!.userId!, currentToken);
 
     res.clearCookie('refreshToken', {
       httpOnly: true,

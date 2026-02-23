@@ -2,7 +2,8 @@
 
 React + Vite frontend. Provides the full authentication UI — home page, register, login, email verification, password reset, Google OAuth, and dashboard.
 
-Runs on: `http://localhost:5173`
+Local dev runs on: `http://localhost:5173`
+Docker runs on: `http://localhost` (port 80, served by nginx)
 
 ## Stack
 
@@ -46,11 +47,12 @@ web/
 │   ├── App.tsx                   ← route definitions
 │   └── main.tsx                  ← entry point
 ├── .env.example
+├── nginx.conf
 ├── index.html
 └── package.json
 ```
 
-## Setup
+## Local Dev Setup
 
 ### Prerequisites
 
@@ -66,10 +68,27 @@ npm install
 npm run dev
 ```
 
+## Docker
+
+In Docker, the frontend is built with `npm run build` and served by nginx on port 80.
+
+```bash
+# From the project root
+docker compose up --build
+```
+
+The frontend will be available at `http://localhost`.
+
+> **Important:** `VITE_API_URL` is baked into the JS bundle at build time. If you change `web/.env`, you must rebuild with `docker compose up --build` for the change to take effect. Restarting the container alone is not enough.
+
 ## Environment Variables
 
 ```env
+# Local dev — points to the API running directly
 VITE_API_URL=http://localhost:3000
+
+# Docker — points to the API exposed on the host
+VITE_API_URL=http://localhost:5001
 ```
 
 > All Vite env variables must be prefixed with `VITE_` to be accessible in the browser.

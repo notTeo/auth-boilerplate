@@ -1,9 +1,18 @@
 declare global {
   namespace Express {
-    interface Request {
+    interface User {
+      userId?: string;
       user?: {
-        userId: string;
+        id: string;
+        email: string;
+        isVerified: boolean;
+        createdAt: Date;
       };
+      accessToken?: string;
+      refreshToken?: string;
+    }
+    interface Request {
+      user?: User;
     }
   }
 }
