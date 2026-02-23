@@ -27,6 +27,13 @@ export const forgotPasswordValidation = [
     .normalizeEmail(),
 ];
 
+export const resendVerificationValidation = [
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+];
+
 export const resetPasswordValidation = [
   body('token')
     .notEmpty()

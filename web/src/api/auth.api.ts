@@ -18,6 +18,9 @@ export const resetPassword = (token: string, password: string) =>
 export const verifyEmail = (token: string) =>
   client.get(`/auth/verify-email?token=${token}`).then((res) => res.data);
 
+export const resendVerification = (email: string) =>
+  client.post('/auth/resend-verification', { email }).then((res) => res.data);
+
 let refreshPromise: Promise<any> | null = null;
 
 export const refreshTokens = () => {

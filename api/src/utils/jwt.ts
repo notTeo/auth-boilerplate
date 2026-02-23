@@ -16,6 +16,7 @@ export const verifyAccessToken = (token: string): { userId: string } => {
 export const signRefreshToken = (userId: string): string => {
   const options: SignOptions = {
     expiresIn: env.jwt.refreshExpiresIn as SignOptions['expiresIn'],
+    jwtid: crypto.randomUUID(),
   };
   return jwt.sign({ userId }, env.jwt.refreshSecret, options);
 };

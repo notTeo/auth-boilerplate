@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 import { LoginDto, RegisterDto } from '../types/auth.types';
 import { logger } from '../utils/logger';
 import { generateRandomToken, getEmailTokenExpiry, getPasswordResetTokenExpiry, getRefreshTokenExpiry, signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
+import { randomUUID } from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from './email.service';
 
 export const registerUser = async ({ email, password }: RegisterDto) => {
@@ -51,7 +52,12 @@ export const loginUser = async ({ email, password }: LoginDto) => {
     throw new AppError(401, 'Invalid credentials')
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.passwordHash!);
+  if (!user.passwordHash) {
+    // OAuth-only account — no password set
+    throw new AppError(401, 'Invalid credentials');
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if(!isPasswordValid){
     logger.warn(`Failed login attempt for: ${email}`);
@@ -60,10 +66,12 @@ export const loginUser = async ({ email, password }: LoginDto) => {
 
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
+  const family = randomUUID();
 
   await prisma.refreshToken.create({
     data: {
       token: refreshToken,
+      family,
       userId: user.id,
       expiresAt: getRefreshTokenExpiry(),
     },
@@ -83,11 +91,11 @@ export const loginUser = async ({ email, password }: LoginDto) => {
   };
 };
 
-export const refreshAccessToken = async (token:string) => {
+export const refreshAccessToken = async (token: string) => {
   let payload: { userId: string };
   try {
-    payload = verifyRefreshToken(token)
-  } catch (error) {
+    payload = verifyRefreshToken(token);
+  } catch {
     throw new AppError(401, 'Invalid refresh token');
   }
 
@@ -95,23 +103,29 @@ export const refreshAccessToken = async (token:string) => {
     where: { token },
   });
 
-  if(!stored || stored.expiresAt < new Date()){
-    throw new AppError(401, 'Refresh token expired or not found');
+  if (!stored) {
+    // Valid JWT but token not in DB — it was already rotated: reuse attack detected.
+    // Invalidate the entire token family to protect the account.
+    logger.warn(`Refresh token reuse detected for userId: ${payload.userId}. Invalidating all sessions.`);
+    await prisma.refreshToken.deleteMany({
+      where: { userId: payload.userId },
+    });
+    throw new AppError(401, 'Session invalidated. Please log in again.');
   }
 
-  const deleted = await prisma.refreshToken.deleteMany({
-    where: { token },
-  });
-
-  if (deleted.count === 0) {
-    throw new AppError(401, 'Refresh token already used');
+  if (stored.expiresAt < new Date()) {
+    await prisma.refreshToken.delete({ where: { token } });
+    throw new AppError(401, 'Refresh token expired');
   }
+
+  await prisma.refreshToken.delete({ where: { token } });
 
   const newRefreshToken = signRefreshToken(payload.userId);
 
   await prisma.refreshToken.create({
     data: {
       token: newRefreshToken,
+      family: stored.family,
       userId: payload.userId,
       expiresAt: getRefreshTokenExpiry(),
     },
@@ -122,7 +136,6 @@ export const refreshAccessToken = async (token:string) => {
   logger.info(`Access token refreshed for userId: ${payload.userId}`);
 
   return { accessToken, newRefreshToken };
-
 }
 
 export const logoutUser = async (token: string) => {
@@ -190,6 +203,108 @@ export const forgotPassword = async (email: string) => {
   await sendPasswordResetEmail(email, token);
 
   logger.info(`Password reset token created for: ${email}`);
+};
+
+export const getSessions = async (userId: string) => {
+  const sessions = await prisma.refreshToken.findMany({
+    where: { userId },
+    select: { id: true, family: true, createdAt: true, expiresAt: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return sessions;
+};
+
+export const revokeAllSessions = async (userId: string, currentToken: string) => {
+  await prisma.refreshToken.deleteMany({
+    where: { userId },
+  });
+  logger.info(`All sessions revoked for userId: ${userId}`);
+};
+
+export const updateUser = async (
+  userId: string,
+  data: { email?: string; password?: string },
+) => {
+  if (data.email) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing && existing.id !== userId) {
+      throw new AppError(409, 'Email already in use');
+    }
+  }
+
+  const updateData: { email?: string; passwordHash?: string; isVerified?: boolean } = {};
+
+  if (data.email) {
+    updateData.email = data.email;
+    updateData.isVerified = false; // email changed — require re-verification
+  }
+
+  if (data.password) {
+    updateData.passwordHash = await bcrypt.hash(data.password, 12);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    const existing = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, email: true, isVerified: true, createdAt: true },
+    });
+    return existing;
+  }
+
+  // Revoke all sessions after password change so any stolen tokens are invalidated
+  if (data.password) {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: { id: true, email: true, isVerified: true, createdAt: true },
+  });
+
+  logger.info(`User updated: ${userId}`);
+  return user;
+};
+
+export const deleteUser = async (userId: string, password: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new AppError(404, 'User not found');
+
+  if (user.passwordHash) {
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) throw new AppError(401, 'Invalid password');
+  }
+
+  // Delete related records first to avoid FK constraint violations
+  await prisma.refreshToken.deleteMany({ where: { userId } });
+  await prisma.passwordResetToken.deleteMany({ where: { userId } });
+
+  await prisma.user.delete({ where: { id: userId } });
+  logger.info(`User deleted: ${userId}`);
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  const pending = await prisma.pendingRegistration.findUnique({ where: { email } });
+
+  if (!pending) {
+    // Don't reveal whether the email exists or not
+    logger.warn(`Resend verification requested for unknown/verified email: ${email}`);
+    return;
+  }
+
+  const token = generateRandomToken();
+
+  await prisma.pendingRegistration.update({
+    where: { email },
+    data: {
+      token,
+      expiresAt: getEmailTokenExpiry(),
+    },
+  });
+
+  await sendVerificationEmail(email, token);
+
+  logger.info(`Verification email resent to: ${email}`);
 };
 
 export const resetPassword = async (token: string, newPassword: string) => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { register } from '../api/auth.api';
+import { register, resendVerification } from '../api/auth.api';
 import { env } from '../config/env';
 import '../styles/pages/register.css';
 
@@ -10,19 +10,36 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
+
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle');
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
     setError('');
     setSuccess('');
     setIsLoading(true);
     try {
       await register(email, password);
+      setRegisteredEmail(email);
       setSuccess('Verification email sent. Please check your inbox.');
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Registration failed');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendStatus('loading');
+    try {
+      await resendVerification(registeredEmail);
+      setResendStatus('sent');
+      setTimeout(() => setResendStatus('idle'), 4000);
+    } catch {
+      setResendStatus('error');
+      setTimeout(() => setResendStatus('idle'), 4000);
     }
   };
 
@@ -66,10 +83,32 @@ export default function RegisterPage() {
             />
           </div>
           {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-          <button className="btn btn-primary" type="submit" disabled={isLoading}>
-            {isLoading ? 'Registering...' : 'Register'}
-          </button>
+          {success && (
+            <>
+              <div className="alert alert-success">
+                {success} Check your spam folder if you don't see it.
+              </div>
+              {resendStatus === 'sent' && (
+                <div className="alert alert-success">Email resent successfully.</div>
+              )}
+              {resendStatus === 'error' && (
+                <div className="alert alert-error">Failed to resend. Please try again.</div>
+              )}
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={handleResend}
+                disabled={resendStatus === 'loading'}
+              >
+                {resendStatus === 'loading' ? 'Sending...' : 'Resend Email'}
+              </button>
+            </>
+          )}
+          {!success && (
+            <button className="btn btn-primary" type="submit" disabled={isLoading}>
+              {isLoading ? 'Registering...' : 'Register'}
+            </button>
+          )}
         </form>
         <div className="form-links">
           <span>Already have an account? <Link to="/login">Login</Link></span>

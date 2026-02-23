@@ -1,6 +1,7 @@
 import { prisma } from '../utils/prisma';
 import { logger } from '../utils/logger';
 import { signAccessToken, signRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';
+import { randomUUID } from 'crypto';
 
 export const handleGoogleAuth = async (
   googleId: string,
@@ -39,6 +40,7 @@ export const handleGoogleAuth = async (
   await prisma.refreshToken.create({
     data: {
       token: refreshToken,
+      family: randomUUID(),
       userId: user.id,
       expiresAt: getRefreshTokenExpiry(),
     },

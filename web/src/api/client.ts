@@ -22,7 +22,9 @@ client.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    // Only attempt refresh if we had an access token (i.e. the user was logged in
+    // and the token expired). Don't intercept 401s from login/auth endpoints.
+    if (error.response?.status === 401 && !original._retry && authStore.getToken()) {
       original._retry = true;
       try {
         const { data } = await refreshClient.post('/auth/refresh');

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { LoginDto, RegisterDto } from '../types/auth.types';
-import { forgotPassword, loginUser, logoutUser, refreshAccessToken, registerUser, resetPassword, verifyEmail } from "../services/auth.service";
+import { forgotPassword, getSessions, loginUser, logoutUser, refreshAccessToken, registerUser, resendVerificationEmail, resetPassword, revokeAllSessions, verifyEmail } from "../services/auth.service";
 import { successResponse } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 import { env } from "../config/env"
@@ -146,6 +146,20 @@ export const resetPasswordController = async (
   }
 };
 
+export const resendVerificationController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { email } = req.body;
+    await resendVerificationEmail(email);
+    successResponse(res, { message: 'If a pending registration exists, a new verification email has been sent.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const googleCallback = async (
   req: Request,
   res: Response,
@@ -173,4 +187,38 @@ export const googleFailure = (
   res: Response,
 ) => {
   res.redirect(`${env.clientUrl}/login?error=oauth_failed`);
+};
+
+export const getSessionsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const sessions = await getSessions(req.user!.userId);
+    successResponse(res, { sessions });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const revokeAllSessionsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const currentToken = req.cookies?.refreshToken;
+    await revokeAllSessions(req.user!.userId, currentToken);
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
+    successResponse(res, { message: 'All sessions revoked' });
+  } catch (err) {
+    next(err);
+  }
 };
