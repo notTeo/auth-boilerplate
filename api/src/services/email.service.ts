@@ -116,7 +116,9 @@ export const sendVerificationEmail = async (
     html: baseTemplate('Verify your email', `
       <h1>Verify your email</h1>
       <p>Thanks for signing up! Click the button below to verify your email address. This link expires in <strong>24 hours</strong>.</p>
-      <a href="${verificationUrl}" class="btn">Verify Email</a>
+      <a href="${verificationUrl}">
+        <h4 class="btn">Verify Email</h4>
+      </a>
     `),
   });
 
@@ -141,7 +143,9 @@ export const sendEmailChangeVerification = async (
     html: baseTemplate('Verify your new email address', `
       <h1>Verify your new email</h1>
       <p>You requested to change your email address. Click the button below to confirm this change. This link expires in <strong>24 hours</strong>.</p>
-      <a href="${verifyUrl}" class="btn">Verify New Email</a>
+      <a href="${verifyUrl}">
+        <h4 class="btn"> Verify New Email</h4>
+      </a>
     `),
   });
 
@@ -166,7 +170,9 @@ export const sendPasswordResetEmail = async (
     html: baseTemplate('Reset your password', `
       <h1>Reset your password</h1>
       <p>We received a request to reset your password. Click the button below to set a new one. This link expires in <strong>1 hour</strong>.</p>
-      <a href="${resetUrl}" class="btn">Reset Password</a>
+      <a href="${resetUrl}">
+        <h4 class="btn">Reset Password</h4>
+      </a>
     `),
   });
 
