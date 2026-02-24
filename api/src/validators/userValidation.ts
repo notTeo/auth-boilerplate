@@ -19,7 +19,5 @@ export const updateMeValidation = [
 ];
 
 export const deleteAccountValidation = [
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required to delete your account'),
+  body('password').optional().isString(),
 ];

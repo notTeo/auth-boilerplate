@@ -34,8 +34,13 @@ export default function SettingsPage() {
     setEmailLoading(true);
     try {
       const data = await updateMe({ email });
-      setUser({ ...user!, email: data.user.email });
-      setEmailSuccess('Email updated successfully.');
+      if (data.message) {
+        setEmailSuccess(data.message);
+        setEmail(user?.email ?? '');
+      } else {
+        setUser({ ...user!, email: data.user.email });
+        setEmailSuccess('Email updated successfully.');
+      }
     } catch (err: any) {
       setEmailError(err.response?.data?.message ?? 'Failed to update email.');
     } finally {
@@ -64,7 +69,7 @@ export default function SettingsPage() {
     setDeleteError('');
     setDeleteLoading(true);
     try {
-      await deleteMe(deletePassword);
+      await deleteMe(user?.hasPassword ? deletePassword : undefined);
       await logout();
       navigate('/');
     } catch (err: any) {
@@ -160,7 +165,7 @@ export default function SettingsPage() {
           >
             Delete Account
           </button>
-        ) : (
+        ) : user?.hasPassword ? (
           <form className="settings-danger-confirm" onSubmit={handleDeleteAccount}>
             <div className="form-group">
               <label htmlFor="delete-password">Confirm your password</label>
@@ -186,6 +191,29 @@ export default function SettingsPage() {
                 className="btn btn-ghost"
                 type="button"
                 onClick={() => { setShowDeleteConfirm(false); setDeletePassword(''); setDeleteError(''); }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form className="settings-danger-confirm" onSubmit={handleDeleteAccount}>
+            <p className="settings-danger-desc">
+              Are you sure? This will permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            {deleteError && <div className="alert alert-error">{deleteError}</div>}
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                className="btn btn-danger"
+                type="submit"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete My Account'}
+              </button>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); }}
               >
                 Cancel
               </button>

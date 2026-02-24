@@ -237,14 +237,14 @@ describe('POST /auth/reset-password', () => {
 
     const res = await request(app)
       .post('/auth/reset-password')
-      .send({ token, password: 'newpassword123' });
+      .send({ token, password: 'Newpassword123!' });
 
     expect(res.status).toBe(200);
 
     // Should be able to login with new password
     const loginRes = await request(app)
       .post('/auth/login')
-      .send({ email: TEST_EMAIL, password: 'newpassword123' });
+      .send({ email: TEST_EMAIL, password: 'Newpassword123!' });
     expect(loginRes.status).toBe(200);
   });
 

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { LoginDto, RegisterDto } from '../types/auth.types';
-import { forgotPassword, getSessions, loginUser, logoutUser, refreshAccessToken, registerUser, resendVerificationEmail, resetPassword, revokeAllSessions, verifyEmail } from "../services/auth.service";
+import { forgotPassword, getSessions, loginUser, logoutUser, refreshAccessToken, registerUser, resendVerificationEmail, resetPassword, revokeAllSessions, verifyEmail, verifyEmailChange } from "../services/auth.service";
 import { successResponse } from "../utils/response";
 import { AppError } from "../middleware/errorHandler";
 import { env } from "../config/env"
@@ -155,6 +155,25 @@ export const resendVerificationController = async (
     const { email } = req.body;
     await resendVerificationEmail(email);
     successResponse(res, { message: 'If a pending registration exists, a new verification email has been sent.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyEmailChangeController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { token } = req.query as { token: string };
+
+    if (!token) {
+      throw new AppError(400, 'Token is required');
+    }
+
+    const user = await verifyEmailChange(token);
+    successResponse(res, { user });
   } catch (err) {
     next(err);
   }

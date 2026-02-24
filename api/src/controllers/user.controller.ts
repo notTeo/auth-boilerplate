@@ -17,6 +17,7 @@ export const getMe = async (
         email: true,
         isVerified: true,
         createdAt: true,
+        passwordHash: true,
         subscription: {
           select: {
             status: true,
@@ -38,7 +39,8 @@ export const getMe = async (
         ? 'pro'
         : 'free';
 
-    successResponse(res, { user: { ...user, plan } });
+    const { passwordHash, ...userWithoutHash } = user;
+    successResponse(res, { user: { ...userWithoutHash, plan, hasPassword: !!passwordHash } });
   } catch (err) {
     next(err);
   }
@@ -51,8 +53,8 @@ export const updateMe = async (
 ) => {
   try {
     const { email, password } = req.body;
-    const user = await updateUser(req.user!.userId!, { email, password });
-    successResponse(res, { user });
+    const result = await updateUser(req.user!.userId!, { email, password });
+    successResponse(res, result);
   } catch (err) {
     next(err);
   }

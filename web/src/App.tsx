@@ -7,6 +7,7 @@ import AppLayout from './components/AppLayout';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import VerifyEmailChangePage from './pages/VerifyEmailChangePage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
@@ -34,6 +35,7 @@ export default function App() {
           </Route>
 
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/verify-email-change" element={<VerifyEmailChangePage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 

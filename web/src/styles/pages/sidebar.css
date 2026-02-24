@@ -12,8 +12,10 @@
 
 /* ─── Sidebar ─── */
 .sidebar {
+  position: sticky;
+  top: 0;           /* ΑΠΑΡΑΙΤΗΤΟ: Καθορίζει πού θα κολλήσει */
   width: 220px;
-  height: 100vh;
+  height: 100vh;    /* Ή 100dvh για καλύτερη συμβατότητα σε κινητά */
   flex-shrink: 0;
   background: var(--bg-card);
   border-right: 1px solid var(--border);
@@ -22,7 +24,7 @@
   flex-direction: column;
   gap: 0.2rem;
   transition: width 0.2s ease, padding 0.2s ease;
-  overflow: hidden;
+  overflow-y: auto;  /* Επιτρέπει το scroll μέσα στη sidebar αν το περιεχόμενο είναι πολύ */
 }
 
 /* ─── Toggle button ─── */
@@ -111,12 +113,6 @@
 }
 
 /* ─── Bottom logout area ─── */
-.sidebar-bottom {
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border);
-}
-
 .sidebar-logout {
   width: 100%;
   background: none;
@@ -131,6 +127,10 @@
   text-align: left;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
+
+    margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
 }
 
 .sidebar-logout:hover {

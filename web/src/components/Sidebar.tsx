@@ -49,6 +49,18 @@ function IconChevronRight() {
   );
 }
 
+function IconLogout() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {/* Το σώμα της "πόρτας" */}
+      <path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v7A1.5 1.5 0 0 0 3.5 13H6" />
+      {/* Το βέλος εξόδου */}
+      <path d="M10 11l3-3-3-3" />
+      <path d="M14 8H6" />
+    </svg>
+  );
+}
+
 export default function Sidebar() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -112,14 +124,15 @@ export default function Sidebar() {
         <span className="sidebar-link-label">Settings</span>
       </NavLink>
 
-      <div className="sidebar-bottom">
-        <button
-          className="sidebar-logout"
+      <button
+          className="sidebar-logout sidebar-link"
           onClick={async () => { await logout(); navigate('/login'); }}
         >
-          Logout
+          <IconLogout/>
+          <span className="sidebar-link-label">Logout</span>
         </button>
-      </div>
+
+        
     </aside>
   );
 }

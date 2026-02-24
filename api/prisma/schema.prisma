@@ -45,6 +45,7 @@ model User {
   refreshTokens          RefreshToken[]
   emailVerificationToken EmailVerificationToken?
   passwordResetToken     PasswordResetToken?
+  pendingEmailChange     PendingEmailChange?
 }
 
 model RefreshToken {
@@ -83,4 +84,15 @@ model PendingRegistration {
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
+}
+
+model PendingEmailChange {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  newEmail  String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

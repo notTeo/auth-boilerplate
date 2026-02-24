@@ -1,7 +1,14 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app';
 import { prisma } from '../utils/prisma';
+
+// Mock email sending so tests don't hit Resend
+vi.mock('../services/email.service', () => ({
+  sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+  sendEmailChangeVerification: vi.fn().mockResolvedValue(undefined),
+}));
 
 const TEST_EMAIL = 'user@example.com';
 const TEST_PASSWORD = 'password123';
@@ -43,7 +50,7 @@ describe('GET /user/me', () => {
 describe('PATCH /user/me', () => {
   beforeEach(async () => { await createVerifiedUser(); });
 
-  it('updates email and marks unverified', async () => {
+  it('sends verification email to new address and does not change email immediately', async () => {
     const token = await loginUser();
     const res = await request(app)
       .patch('/user/me')
@@ -51,8 +58,18 @@ describe('PATCH /user/me', () => {
       .send({ email: 'new@example.com' });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.user.email).toBe('new@example.com');
-    expect(res.body.data.user.isVerified).toBe(false);
+    expect(res.body.data.message).toBeTruthy();
+    expect(res.body.data.user).toBeUndefined();
+
+    // Email must not have changed in DB yet
+    const user = await prisma.user.findUnique({ where: { email: TEST_EMAIL } });
+    expect(user).not.toBeNull();
+
+    // PendingEmailChange record must exist
+    const pending = await prisma.pendingEmailChange.findFirst({
+      where: { newEmail: 'new@example.com' },
+    });
+    expect(pending).not.toBeNull();
   });
 
   it('updates password and revokes all sessions', async () => {
@@ -60,7 +77,7 @@ describe('PATCH /user/me', () => {
     const res = await request(app)
       .patch('/user/me')
       .set('Authorization', `Bearer ${token}`)
-      .send({ password: 'newpassword456' });
+      .send({ password: 'Newpassword456!' });
 
     expect(res.status).toBe(200);
 
@@ -88,6 +105,66 @@ describe('PATCH /user/me', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ email: 'not-valid' });
 
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /auth/verify-email-change', () => {
+  beforeEach(async () => { await createVerifiedUser(); });
+
+  it('updates email when valid token is provided', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: TEST_EMAIL } });
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 24);
+
+    await prisma.pendingEmailChange.create({
+      data: {
+        userId: user.id,
+        newEmail: 'changed@example.com',
+        token: 'valid-token-abc123',
+        expiresAt: expiry,
+      },
+    });
+
+    const res = await request(app).get('/auth/verify-email-change?token=valid-token-abc123');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.email).toBe('changed@example.com');
+    expect(res.body.data.user.isVerified).toBe(true);
+
+    // PendingEmailChange record must be cleaned up
+    const pending = await prisma.pendingEmailChange.findUnique({
+      where: { token: 'valid-token-abc123' },
+    });
+    expect(pending).toBeNull();
+  });
+
+  it('returns 400 for an expired token', async () => {
+    const user = await prisma.user.findUniqueOrThrow({ where: { email: TEST_EMAIL } });
+    const expired = new Date();
+    expired.setHours(expired.getHours() - 1);
+
+    await prisma.pendingEmailChange.create({
+      data: {
+        userId: user.id,
+        newEmail: 'expired@example.com',
+        token: 'expired-token-xyz',
+        expiresAt: expired,
+      },
+    });
+
+    const res = await request(app).get('/auth/verify-email-change?token=expired-token-xyz');
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for an invalid token', async () => {
+    const res = await request(app).get('/auth/verify-email-change?token=bogus-token');
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when no token is provided', async () => {
+    const res = await request(app).get('/auth/verify-email-change');
     expect(res.status).toBe(400);
   });
 });

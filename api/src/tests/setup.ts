@@ -6,6 +6,7 @@ afterEach(async () => {
   await prisma.passwordResetToken.deleteMany();
   await prisma.emailVerificationToken.deleteMany();
   await prisma.pendingRegistration.deleteMany();
+  await prisma.pendingEmailChange.deleteMany();
   await prisma.user.deleteMany();
 });
 

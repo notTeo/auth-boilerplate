@@ -128,6 +128,31 @@ export const sendVerificationEmail = async (
   logger.info(`Verification email sent to ${email}`);
 };
 
+export const sendEmailChangeVerification = async (
+  newEmail: string,
+  token: string,
+) => {
+  const verifyUrl = `${env.clientUrl}/verify-email-change?token=${token}`;
+
+  const { error } = await resend.emails.send({
+    from: env.resend.emailFrom,
+    to: newEmail,
+    subject: 'Verify your new email address',
+    html: baseTemplate('Verify your new email address', `
+      <h1>Verify your new email</h1>
+      <p>You requested to change your email address. Click the button below to confirm this change. This link expires in <strong>24 hours</strong>.</p>
+      <a href="${verifyUrl}" class="btn">Verify New Email</a>
+    `),
+  });
+
+  if (error) {
+    logger.error(error, `Failed to send email change verification to ${newEmail}`);
+    throw new Error('Failed to send email change verification');
+  }
+
+  logger.info(`Email change verification sent to ${newEmail}`);
+};
+
 export const sendPasswordResetEmail = async (
   email: string,
   token: string,

@@ -9,6 +9,7 @@ interface User {
   isVerified: boolean;
   createdAt: string;
   plan: 'free' | 'pro';
+  hasPassword: boolean;
   subscription?: {
     status: string;
     stripePriceId: string;

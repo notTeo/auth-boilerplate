@@ -5,7 +5,7 @@ import { LoginDto, RegisterDto } from '../types/auth.types';
 import { logger } from '../utils/logger';
 import { generateRandomToken, getEmailTokenExpiry, getPasswordResetTokenExpiry, getRefreshTokenExpiry, signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { randomUUID } from 'crypto';
-import { sendPasswordResetEmail, sendVerificationEmail } from './email.service';
+import { sendEmailChangeVerification, sendPasswordResetEmail, sendVerificationEmail } from './email.service';
 
 export const registerUser = async ({ email, password }: RegisterDto) => {
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -224,49 +224,72 @@ export const revokeAllSessions = async (userId: string, currentToken: string) =>
 export const updateUser = async (
   userId: string,
   data: { email?: string; password?: string },
-) => {
+): Promise<{ user: { id: string; email: string; isVerified: boolean; createdAt: Date } } | { message: string }> => {
+  // Handle email change — create a pending verification instead of updating directly
   if (data.email) {
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing && existing.id !== userId) {
       throw new AppError(409, 'Email already in use');
     }
+
+    const token = generateRandomToken();
+    await prisma.pendingEmailChange.upsert({
+      where: { userId },
+      update: { newEmail: data.email, token, expiresAt: getEmailTokenExpiry() },
+      create: { userId, newEmail: data.email, token, expiresAt: getEmailTokenExpiry() },
+    });
+
+    await sendEmailChangeVerification(data.email, token);
+    logger.info(`Email change verification sent for userId: ${userId}`);
+    return { message: 'Verification email sent to your new address' };
   }
 
-  const updateData: { email?: string; passwordHash?: string; isVerified?: boolean } = {};
-
-  if (data.email) {
-    updateData.email = data.email;
-    updateData.isVerified = false; // email changed — require re-verification
-  }
-
+  // Handle password change (immediate)
   if (data.password) {
-    updateData.passwordHash = await bcrypt.hash(data.password, 12);
-  }
-
-  if (Object.keys(updateData).length === 0) {
-    const existing = await prisma.user.findUniqueOrThrow({
+    const passwordHash = await bcrypt.hash(data.password, 12);
+    await prisma.refreshToken.deleteMany({ where: { userId } });
+    const user = await prisma.user.update({
       where: { id: userId },
+      data: { passwordHash },
       select: { id: true, email: true, isVerified: true, createdAt: true },
     });
-    return existing;
+    logger.info(`Password updated for userId: ${userId}`);
+    return { user };
   }
 
-  // Revoke all sessions after password change so any stolen tokens are invalidated
-  if (data.password) {
-    await prisma.refreshToken.deleteMany({ where: { userId } });
+  // Nothing to update — return current user
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
+    select: { id: true, email: true, isVerified: true, createdAt: true },
+  });
+  return { user };
+};
+
+export const verifyEmailChange = async (token: string) => {
+  const pending = await prisma.pendingEmailChange.findUnique({ where: { token } });
+
+  if (!pending) {
+    throw new AppError(400, 'Invalid verification token');
+  }
+
+  if (pending.expiresAt < new Date()) {
+    await prisma.pendingEmailChange.delete({ where: { token } });
+    throw new AppError(400, 'Verification token expired');
   }
 
   const user = await prisma.user.update({
-    where: { id: userId },
-    data: updateData,
+    where: { id: pending.userId },
+    data: { email: pending.newEmail, isVerified: true },
     select: { id: true, email: true, isVerified: true, createdAt: true },
   });
 
-  logger.info(`User updated: ${userId}`);
+  await prisma.pendingEmailChange.delete({ where: { token } });
+
+  logger.info(`Email changed for userId: ${pending.userId} → ${pending.newEmail}`);
   return user;
 };
 
-export const deleteUser = async (userId: string, password: string) => {
+export const deleteUser = async (userId: string, password?: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new AppError(404, 'User not found');
 
